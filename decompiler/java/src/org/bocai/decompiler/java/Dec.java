@@ -328,19 +328,67 @@ public class Dec {
 		for (int i = 0; i < attrCount; i++) {
 			int nameIndex = in.readUnsignedShort();
 			Object attrType = constantPool[nameIndex].value;
-			System.out.print("attribute #" + nameIndex + " //"+attrType);
-			
-			if(AttributeType.Code.name().equals((String)attrType)){
+			System.out.println("attribute #" + nameIndex + " //" + attrType);
+
+			if (AttributeType.Code.name().equals((String) attrType)) {
 				parseAttributeCode(in);
 			}
-			
-			int length=in.readUnsignedShort();
 
 		}
 	}
 
-	private static void parseAttributeCode(DataInputStream in) {
-		// TODO Auto-generated method stub
+	/**
+	 * <pre>
+	 * u2:attribute_name_index
+	 * u4:attribute_length
+	 * u2:max_stack
+	 * u2:max_locals
+	 * u4:code_length
+	 * u1:code
+	 * u2:exception_table_length
+	 * exception_info:exception_table
+	 * u2:attributes_count
+	 * attribute_info:attributes
+	 * </pre>
+	 * 
+	 * @param in
+	 * @throws IOException 
+	 */
+	private static void parseAttributeCode(DataInputStream in) throws IOException {
+		int length=in.readInt();
+		int maxStack=in.readUnsignedShort();
+		int maxLocals=in.readUnsignedShort();
+		int codeLength=in.readInt();
+		for(int i=0;i<codeLength;i++){
+			int code=in.readUnsignedByte();
+			String mnemonic = OperateCode.get(code);
+			if("invokespecial".equals(mnemonic)||
+					"invokestatic".equals(mnemonic)||
+					"putfield".equals(mnemonic)||
+					"ldc2_w".equals(mnemonic)||
+					"getstatic".equals(mnemonic)||
+					"invokevirtual".equals(mnemonic)){
+				int index=in.readUnsignedShort();
+				System.out.println(i+":  "+mnemonic +" #"+index);
+				i+=2;
+			}
+			else if("bipush".equals(mnemonic)){
+				int value=in.readUnsignedByte();
+				System.out.println(i+":  "+mnemonic +" "+value);
+				i++;
+			}
+			 
+			else
+			System.out.println(i+":  "+mnemonic);
+		}
+		int exceptionTableLength=in.readUnsignedShort();
+		for(int i=0;i<exceptionTableLength;i++){
+			int startPc=in.readUnsignedShort();
+			int endPc=in.readUnsignedShort();
+			int handlePc=in.readUnsignedShort();
+			int catchPc=in.readUnsignedShort();
+		}
 		
+		parseAttributes(in);
 	}
 }
