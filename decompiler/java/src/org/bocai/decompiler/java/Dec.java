@@ -361,25 +361,8 @@ public class Dec {
 		int codeLength=in.readInt();
 		for(int i=0;i<codeLength;i++){
 			int code=in.readUnsignedByte();
-			String mnemonic = OperateCode.get(code);
-			if("invokespecial".equals(mnemonic)||
-					"invokestatic".equals(mnemonic)||
-					"putfield".equals(mnemonic)||
-					"ldc2_w".equals(mnemonic)||
-					"getstatic".equals(mnemonic)||
-					"invokevirtual".equals(mnemonic)){
-				int index=in.readUnsignedShort();
-				System.out.println(i+":  "+mnemonic +" #"+index);
-				i+=2;
-			}
-			else if("bipush".equals(mnemonic)){
-				int value=in.readUnsignedByte();
-				System.out.println(i+":  "+mnemonic +" "+value);
-				i++;
-			}
-			 
-			else
-			System.out.println(i+":  "+mnemonic);
+			OperateCode opCode = OperateCodes.opCodes[code];
+			parseOperateCode(opCode);
 		}
 		int exceptionTableLength=in.readUnsignedShort();
 		for(int i=0;i<exceptionTableLength;i++){
@@ -390,5 +373,11 @@ public class Dec {
 		}
 		
 		parseAttributes(in);
+	}
+
+	//½âÎö×Ö·ûÂëÖ¸Áî
+	private static void parseOperateCode(OperateCode opCode) {
+		// TODO Auto-generated method stub
+		
 	}
 }
