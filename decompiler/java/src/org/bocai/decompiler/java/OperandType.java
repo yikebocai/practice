@@ -6,7 +6,7 @@ public enum OperandType {
 	INT_VALUE,// 有符号整数
 	UNSIGNED_BYTE,//无符号字节
 	ZERO,//
-	BRACH_OFFSET, //有符号整数
+	BRANCH_OFFSET, //有符号整数
 	INDEX_CONST,//index为u1的本地变量索引，const为有符号的一个字节的整数
 	MUTABLE,//操作数不固定，根据指令来确定，比如lookupswitch
 	; 

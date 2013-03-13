@@ -352,32 +352,126 @@ public class Dec {
 	 * </pre>
 	 * 
 	 * @param in
-	 * @throws IOException 
+	 * @throws IOException
 	 */
-	private static void parseAttributeCode(DataInputStream in) throws IOException {
-		int length=in.readInt();
-		int maxStack=in.readUnsignedShort();
-		int maxLocals=in.readUnsignedShort();
-		int codeLength=in.readInt();
-		for(int i=0;i<codeLength;i++){
-			int code=in.readUnsignedByte();
+	private static void parseAttributeCode(DataInputStream in)
+			throws IOException {
+		int length = in.readInt();
+		int maxStack = in.readUnsignedShort();
+		int maxLocals = in.readUnsignedShort();
+		System.out.println("stack=" + maxStack + ",locals=" + maxLocals);
+
+		int codeLength = in.readInt();
+		for (int i = 0; i < codeLength; i++) {
+			int code = in.readUnsignedByte();
 			OperateCode opCode = OperateCodes.opCodes[code];
-			parseOperateCode(opCode);
+			int skip = parseOperateCode(opCode, in, i);
+			i += skip;
+
 		}
-		int exceptionTableLength=in.readUnsignedShort();
-		for(int i=0;i<exceptionTableLength;i++){
-			int startPc=in.readUnsignedShort();
-			int endPc=in.readUnsignedShort();
-			int handlePc=in.readUnsignedShort();
-			int catchPc=in.readUnsignedShort();
+
+		int exceptionTableLength = in.readUnsignedShort();
+		for (int i = 0; i < exceptionTableLength; i++) {
+			int startPc = in.readUnsignedShort();
+			int endPc = in.readUnsignedShort();
+			int handlePc = in.readUnsignedShort();
+			int catchPc = in.readUnsignedShort();
 		}
-		
+
 		parseAttributes(in);
 	}
 
-	//½âÎö×Ö·ûÂëÖ¸Áî
-	private static void parseOperateCode(OperateCode opCode) {
-		// TODO Auto-generated method stub
-		
+	// ½âÎö×Ö·ûÂëÖ¸Áî
+	private static int parseOperateCode(OperateCode opCode, DataInputStream in,
+			int currentIndex) throws IOException {
+		int skip = 0;
+		int startIndex = currentIndex;
+		String mnemonic = opCode.getMnemonic();
+
+		if (opCode.getOperandType() != null) {
+
+			int operandCount = opCode.getOperandCount();
+			switch (opCode.getOperandType()) {
+			case CONSTANT_POOL_INDEX:
+				byte[] operand = new byte[operandCount];
+				in.read(operand, 0, operandCount);
+				int index = bytes2int(operand);
+				mnemonic += "  #" + index + "(CP)";
+				skip += operandCount;
+
+				if (opCode.getOperandType1() != null) {
+					if (opCode.getOperandType1() == OperandType.UNSIGNED_BYTE
+							|| opCode.getOperandType1() == OperandType.ZERO) {
+						int value = in.readUnsignedByte();
+						mnemonic += "," + value;
+						skip++;
+					}
+
+					if (opCode.getOperandType2() != null) {
+						if (opCode.getOperandType1() == OperandType.UNSIGNED_BYTE
+								|| opCode.getOperandType1() == OperandType.ZERO) {
+							int value = in.readUnsignedByte();
+							mnemonic += "," + value;
+							skip++;
+						}
+					}
+				}
+
+				break;
+			case LOCAL_VARIABLES_INDEX:
+				int lvIndex = in.readUnsignedShort();
+				mnemonic += "  #" + lvIndex + "(LV)";
+				skip += 2;
+				break;
+			case BRANCH_OFFSET:
+				int offset = in.readShort();
+				mnemonic += "  #" + offset + "(BO)";
+				skip += 2;
+				break;
+			case INT_VALUE:
+				byte[] operandInt = new byte[operandCount];
+				in.read(operandInt, 0, operandCount);
+				int value = bytes2int(operandInt);
+				mnemonic += "  " + value;
+				skip += operandCount;
+				break;
+			case INDEX_CONST:
+				int u1 = in.readUnsignedByte();
+				int constValue = in.readByte();
+				mnemonic += "  #" + u1 + "(LV) " + constValue;
+				skip += 2;
+				break;
+			case MUTABLE:
+				if ("tableswitch".equals(opCode.getMnemonic())) {
+					// TODO:
+					mnemonic += "  %mutable";
+				} else if ("lookupswitch".equals(opCode.getMnemonic())) {
+					// TODO:
+					mnemonic += "  %mutable";
+				} else if ("wide".equals(opCode.getMnemonic())) {
+					// TODO:
+					mnemonic += "  %mutable";
+				}
+
+				break;
+			case ZERO:
+			case UNSIGNED_BYTE:
+				break;
+
+			}
+		}
+
+		System.out.println(startIndex + " : " + mnemonic);
+		return skip;
+
+	}
+
+	private static int bytes2int(byte[] bs) {
+		int result = bs[bs.length-1];
+		for (int i = 0; i < bs.length-1; i++) {
+			result = result | (bs[i] << (int) Math.pow(2, bs.length - i - 1));
+		}
+
+		return result;
 	}
 }
