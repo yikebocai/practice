@@ -1,6 +1,7 @@
 package org.bocai.decompiler.java;
 
 import java.io.DataInputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
@@ -329,12 +330,158 @@ public class Dec {
 			int nameIndex = in.readUnsignedShort();
 			Object attrType = constantPool[nameIndex].value;
 			System.out.println("attribute #" + nameIndex + " //" + attrType);
-
+			System.out.println("  "+attrType+":");
+			
+			int length = in.readInt();
 			if (AttributeType.Code.name().equals((String) attrType)) {
 				parseAttributeCode(in);
 			}
+			else if (AttributeType.Exceptions.name().equals((String) attrType)) {
+				parseAttributeException(in);
+			}
+			else if (AttributeType.LineNumberTable.name().equals((String) attrType)) {
+				parseAttributeLineNumberTable(in);
+			}
+			else if (AttributeType.LocalVariableTable.name().equals((String) attrType)) {
+				parseAttributeLocalVariableTable(in);
+			}
+			else if (AttributeType.SourceFile.name().equals((String) attrType)) {
+				parseAttributeSouceFile(in);
+			}
+			else if (AttributeType.ConstantValue.name().equals((String) attrType)) {
+				parseAttributeConstantValue(in);
+			}
+			else if (AttributeType.InnerClass.name().equals((String) attrType)) {
+				parseAttributeInnerClass(in);
+			}
+			else if (AttributeType.Deprecated.name().equals((String) attrType)) {
+				parseAttributeDeprecated(in);
+			}
+			else if (AttributeType.Synthetic.name().equals((String) attrType)) {
+				parseAttributeSynthetic(in);
+			}
+			else{
+				System.err.println("Error attribute!");
+			}
 
 		}
+	}
+
+	private static void parseAttributeSynthetic(DataInputStream in) {
+		System.out.println("Synthetic:true");
+		
+	}
+
+	private static void parseAttributeDeprecated(DataInputStream in) {
+		System.out.println("Deprecated:true");
+		
+	}
+
+	private static void parseAttributeInnerClass(DataInputStream in) throws IOException {
+		int number=in.readUnsignedShort();
+		
+		for(int i=0;i<number;i++){
+			int innerClassInfoIndex=in.readUnsignedShort();
+			int outerClassInfoIndex=in.readUnsignedShort();
+			int innerNameIndex=in.readUnsignedShort();
+			int innerClassAccessFlag=in.readUnsignedShort();
+			
+			int index1=constantPool[innerClassInfoIndex].classIndex;
+			String clazz1=(String)constantPool[index1].value;
+			System.out.println("\t#"+index1+" //"+clazz1);
+			
+			int index2=constantPool[outerClassInfoIndex].classIndex;
+			String clazz2=(String)constantPool[index2].value;
+			System.out.println("\t#"+index1+" //"+clazz2);
+			
+			System.out.println("\t#"+innerNameIndex+" //"+constantPool[innerNameIndex].value);
+			 
+			System.out.println("innerClassAccessFlag: 0x"
+					+ Integer.toHexString(innerClassAccessFlag) + ":");
+
+			if ((innerClassAccessFlag & InnerClassAccessFlag.ACC_PUBLIC) == InnerClassAccessFlag.ACC_PUBLIC) {
+				System.out.println("\tACC_PUBLIC");
+			}
+			if ((innerClassAccessFlag & InnerClassAccessFlag.ACC_PRIVATE) == InnerClassAccessFlag.ACC_PRIVATE) {
+				System.out.println("\tACC_PRIVATE");
+			}
+			if ((innerClassAccessFlag & InnerClassAccessFlag.ACC_PROTECTED) == InnerClassAccessFlag.ACC_PROTECTED) {
+				System.out.println("\tACC_PROTECTED");
+			}
+			if ((innerClassAccessFlag & InnerClassAccessFlag.ACC_STATIC) == InnerClassAccessFlag.ACC_STATIC) {
+				System.out.println("\tACC_STATIC");
+			}
+			if ((innerClassAccessFlag & InnerClassAccessFlag.ACC_FINAL) == InnerClassAccessFlag.ACC_FINAL) {
+				System.out.println("\tACC_FINAL");
+			}
+			if ((innerClassAccessFlag & InnerClassAccessFlag.ACC_INTERFACE) == InnerClassAccessFlag.ACC_INTERFACE) {
+				System.out.println("\tACC_INTERFACE");
+			}
+			if ((innerClassAccessFlag & InnerClassAccessFlag.ACC_ABSTRACT) == InnerClassAccessFlag.ACC_ABSTRACT) {
+				System.out.println("\tACC_ABSTRACT");
+			}
+			if ((innerClassAccessFlag & InnerClassAccessFlag.ACC_SYNTHETIC) == InnerClassAccessFlag.ACC_SYNTHETIC) {
+				System.out.println("\tACC_SYNTHETIC");
+			}
+			if ((innerClassAccessFlag & InnerClassAccessFlag.ACC_ANNOTATION) == InnerClassAccessFlag.ACC_ANNOTATION) {
+				System.out.println("\tACC_ANNOTATION");
+			}
+			if ((innerClassAccessFlag & InnerClassAccessFlag.ACC_ENUM) == InnerClassAccessFlag.ACC_ENUM) {
+				System.out.println("\tACC_ENUM");
+			}
+		}
+	}
+
+	private static void parseAttributeConstantValue(DataInputStream in) throws IOException {
+		int index=in.readUnsignedShort();
+		System.out.println("\t#"+index+"  //"+constantPool[index].tag+" "+constantPool[index].value);
+		
+	}
+
+	private static void parseAttributeSouceFile(DataInputStream in) throws IOException {
+		int index=in.readUnsignedShort();
+		System.out.println("\t#"+index+"  //"+constantPool[index].value);
+	}
+
+	//u2:local_variable_table_length,local_variable_info:local_variable_table
+	private static void parseAttributeLocalVariableTable(DataInputStream in) throws IOException {
+		int tableLength=in.readUnsignedShort();
+		for(int i=0;i<tableLength;i++){
+			//局部变量生命周期开始的字节码偏移量和覆盖长度，结合起来表示局部变更的作用域范围
+			int startpc=in.readUnsignedShort();
+			int length=in.readUnsignedShort();
+			//指向常量池CONSTANT_utf8_info型常量的索引，分别代表局部变量的名称和描述符
+			int nameIndex=in.readUnsignedShort();
+			int descriptorIndex=in.readUnsignedShort();
+			//局部变量在栈桢局部变量表中Slot的位置,当时变量数据类型为64位类型(double和long),它占用的Slot为index和index+1两个位置
+			int index=in.readUnsignedShort();
+					
+			System.out.println("\tLV: "+startpc+" -> "+(startpc+length)+",NI:"+constantPool[nameIndex].value+
+					",DI:"+constantPool[descriptorIndex].value+",Slot:"+index);
+		}
+		
+	}
+
+	//u2:number_of_exceptions,u2:exception_index_table
+	private static void parseAttributeException(DataInputStream in) throws IOException {
+		int numOfExcep=in.readUnsignedShort();
+		for(int i=0;i<numOfExcep;i++){
+			int index=in.readUnsignedShort();
+			int classIndex = constantPool[index].classIndex;
+			System.out.println("  #"+classIndex+","+constantPool[classIndex].value);
+		}
+		
+	}
+
+	//u2:line_number_table_length,line_number_info(u2:start_pc,u2:line_number):line_number_table
+	private static void parseAttributeLineNumberTable(DataInputStream in) throws IOException {
+		int length=in.readUnsignedShort();
+		for(int i=0;i<length;i++){
+			int startpc=in.readUnsignedShort();//字节码行号
+			int lineNumber=in.readUnsignedShort();//java源代码行号
+			System.out.println("\tline "+lineNumber+": "+startpc);
+		}
+		
 	}
 
 	/**
@@ -356,10 +503,10 @@ public class Dec {
 	 */
 	private static void parseAttributeCode(DataInputStream in)
 			throws IOException {
-		int length = in.readInt();
+		
 		int maxStack = in.readUnsignedShort();
 		int maxLocals = in.readUnsignedShort();
-		System.out.println("stack=" + maxStack + ",locals=" + maxLocals);
+		System.out.println("\tstack=" + maxStack + ",locals=" + maxLocals);
 
 		int codeLength = in.readInt();
 		for (int i = 0; i < codeLength; i++) {
@@ -461,7 +608,7 @@ public class Dec {
 			}
 		}
 
-		System.out.println(startIndex + " : " + mnemonic);
+		System.out.println("\t"+startIndex + " : " + mnemonic);
 		return skip;
 
 	}
