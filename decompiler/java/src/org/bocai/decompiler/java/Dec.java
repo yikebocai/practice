@@ -1,7 +1,6 @@
 package org.bocai.decompiler.java;
 
 import java.io.DataInputStream;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
@@ -329,73 +328,204 @@ public class Dec {
 		for (int i = 0; i < attrCount; i++) {
 			int nameIndex = in.readUnsignedShort();
 			Object attrType = constantPool[nameIndex].value;
-			System.out.println("attribute #" + nameIndex + " //" + attrType);
-			System.out.println("  "+attrType+":");
-			
+			System.out.println("attribute #" + nameIndex);
+			System.out.println("  " + attrType + ":");
+
 			int length = in.readInt();
 			if (AttributeType.Code.name().equals((String) attrType)) {
 				parseAttributeCode(in);
-			}
-			else if (AttributeType.Exceptions.name().equals((String) attrType)) {
+			} else if (AttributeType.Exceptions.name()
+					.equals((String) attrType)) {
 				parseAttributeException(in);
-			}
-			else if (AttributeType.LineNumberTable.name().equals((String) attrType)) {
+			} else if (AttributeType.LineNumberTable.name().equals(
+					(String) attrType)) {
 				parseAttributeLineNumberTable(in);
-			}
-			else if (AttributeType.LocalVariableTable.name().equals((String) attrType)) {
+			} else if (AttributeType.LocalVariableTable.name().equals(
+					(String) attrType)) {
 				parseAttributeLocalVariableTable(in);
-			}
-			else if (AttributeType.SourceFile.name().equals((String) attrType)) {
+			} else if (AttributeType.SourceFile.name()
+					.equals((String) attrType)) {
 				parseAttributeSouceFile(in);
-			}
-			else if (AttributeType.ConstantValue.name().equals((String) attrType)) {
+			} else if (AttributeType.ConstantValue.name().equals(
+					(String) attrType)) {
 				parseAttributeConstantValue(in);
-			}
-			else if (AttributeType.InnerClass.name().equals((String) attrType)) {
+			} else if (AttributeType.InnerClass.name()
+					.equals((String) attrType)) {
 				parseAttributeInnerClass(in);
-			}
-			else if (AttributeType.Deprecated.name().equals((String) attrType)) {
+			} else if (AttributeType.Deprecated.name()
+					.equals((String) attrType)) {
 				parseAttributeDeprecated(in);
-			}
-			else if (AttributeType.Synthetic.name().equals((String) attrType)) {
+			} else if (AttributeType.Synthetic.name().equals((String) attrType)) {
 				parseAttributeSynthetic(in);
-			}
-			else{
+			} else if (AttributeType.StackMapTable.name().equals(
+					(String) attrType)) {
+				parseAttributeStackMapTable(in);
+			} else {
 				System.err.println("Error attribute!");
 			}
 
 		}
 	}
 
+	// u2:number_of_entries,stack_map_frame: entries[number_of_entries];
+	private static void parseAttributeStackMapTable(DataInputStream in)
+			throws IOException {
+		int number = in.readUnsignedShort();
+		System.out.println("\tnumber_of_entries = " + number);
+
+		for (int i = 0; i < number; i++) {
+			int frameType = in.readUnsignedByte();
+			String frameTypeTag=null;
+			
+			if (frameType < 64) {
+				frameTypeTag="SAME";
+				System.out.println("\tframe_type="+frameType+"  /*"+frameTypeTag+"*/");
+			} else if (frameType >= 64 && frameType < 128) {
+				frameTypeTag="SAME_LOCALS_1_STACK_ITEM";
+				System.out.println("\tframe_type="+frameType+"  /*"+frameTypeTag+"*/");
+			} else if (frameType >= 128 && frameType < 247) {
+				frameTypeTag="SAME_LOCALS_1_STACK_ITEM_EXTENDED";
+				System.out.println("\tframe_type="+frameType+"  /*"+frameTypeTag+"*/");
+			}
+			else if (frameType ==247) {
+				frameTypeTag="CHOP";
+				System.out.println("\tframe_type="+frameType+"  /*"+frameTypeTag+"*/");
+			}
+			else if (frameType >= 248 && frameType < 251) {
+				frameTypeTag="SAME_FRAME_EXTENDED";
+				System.out.println("\tframe_type="+frameType+"  /*"+frameTypeTag+"*/");
+			}
+			else if (frameType >= 252 && frameType < 254) {
+				frameTypeTag="APPEND";
+				System.out.println("\tframe_type="+frameType+"  /*"+frameTypeTag+"*/");
+			}
+			else if (frameType ==255) {
+				frameTypeTag="FULL_FRAME";
+				System.out.println("\tframe_type="+frameType+"  /*"+frameTypeTag+"*/");
+				
+				int offsetDelta=in.readUnsignedShort();
+				System.out.println("\t\toffset_delta = "+offsetDelta);
+				
+				String locals="[";
+				int numberOfLocals=in.readUnsignedShort();
+				for(int j=0;j<numberOfLocals;j++){
+					int tag=in.readUnsignedByte();
+					 
+					switch(tag){
+					case 0:
+						locals+="top,";
+						break;
+					case 1:
+						locals+="int,";
+						break;
+					case 2:
+						locals+="float,";
+						break;
+					case 3:
+						locals+="double,";
+						break;
+					case 4:
+						locals+="long,";
+						break;
+					case 5:
+						locals+="null,";
+						break;
+					case 6:
+						locals+="uninitializedThis,";
+						break;
+					case 7:
+						int cpoolIndex=in.readUnsignedShort();
+						locals+=ConstantPooTool.getString(constantPool[cpoolIndex], constantPool)+",";
+						break;
+					case 8:
+						int offset=in.readUnsignedShort();
+						locals+="uninitialized("+offset+"),";
+						break;
+					}
+					
+				}
+				locals+="]";
+				System.out.println("\t\tlocals = "+locals);
+				
+				String stack="[";
+				int numberOfStack=in.readUnsignedShort();
+				for(int j=0;j<numberOfStack;j++){
+					int tag=in.readUnsignedByte();
+					 
+					switch(tag){
+					case 0:
+						stack+="top,";
+						break;
+					case 1:
+						stack+="int,";
+						break;
+					case 2:
+						stack+="float,";
+						break;
+					case 3:
+						stack+="double,";
+						break;
+					case 4:
+						stack+="long,";
+						break;
+					case 5:
+						stack+="null,";
+						break;
+					case 6:
+						stack+="uninitializedThis,";
+						break;
+					case 7:
+						int cpoolIndex=in.readUnsignedShort();
+						stack+=ConstantPooTool.getString(constantPool[cpoolIndex], constantPool)+",";
+						break;
+					case 8:
+						int offset=in.readUnsignedShort();
+						stack+="uninitialized("+offset+"),";
+						break;
+					}
+					
+				}
+				stack+="]";
+				System.out.println("\t\tstack = "+stack);
+				
+			}
+			 
+			
+		}
+
+	}
+
 	private static void parseAttributeSynthetic(DataInputStream in) {
 		System.out.println("Synthetic:true");
-		
+
 	}
 
 	private static void parseAttributeDeprecated(DataInputStream in) {
 		System.out.println("Deprecated:true");
-		
+
 	}
 
-	private static void parseAttributeInnerClass(DataInputStream in) throws IOException {
-		int number=in.readUnsignedShort();
-		
-		for(int i=0;i<number;i++){
-			int innerClassInfoIndex=in.readUnsignedShort();
-			int outerClassInfoIndex=in.readUnsignedShort();
-			int innerNameIndex=in.readUnsignedShort();
-			int innerClassAccessFlag=in.readUnsignedShort();
-			
-			int index1=constantPool[innerClassInfoIndex].classIndex;
-			String clazz1=(String)constantPool[index1].value;
-			System.out.println("\t#"+index1+" //"+clazz1);
-			
-			int index2=constantPool[outerClassInfoIndex].classIndex;
-			String clazz2=(String)constantPool[index2].value;
-			System.out.println("\t#"+index1+" //"+clazz2);
-			
-			System.out.println("\t#"+innerNameIndex+" //"+constantPool[innerNameIndex].value);
-			 
+	private static void parseAttributeInnerClass(DataInputStream in)
+			throws IOException {
+		int number = in.readUnsignedShort();
+
+		for (int i = 0; i < number; i++) {
+			int innerClassInfoIndex = in.readUnsignedShort();
+			int outerClassInfoIndex = in.readUnsignedShort();
+			int innerNameIndex = in.readUnsignedShort();
+			int innerClassAccessFlag = in.readUnsignedShort();
+
+			int index1 = constantPool[innerClassInfoIndex].classIndex;
+			String clazz1 = (String) constantPool[index1].value;
+			System.out.println("\t#" + index1 + " //" + clazz1);
+
+			int index2 = constantPool[outerClassInfoIndex].classIndex;
+			String clazz2 = (String) constantPool[index2].value;
+			System.out.println("\t#" + index1 + " //" + clazz2);
+
+			System.out.println("\t#" + innerNameIndex + " //"
+					+ constantPool[innerNameIndex].value);
+
 			System.out.println("innerClassAccessFlag: 0x"
 					+ Integer.toHexString(innerClassAccessFlag) + ":");
 
@@ -432,56 +562,64 @@ public class Dec {
 		}
 	}
 
-	private static void parseAttributeConstantValue(DataInputStream in) throws IOException {
-		int index=in.readUnsignedShort();
-		System.out.println("\t#"+index+"  //"+constantPool[index].tag+" "+constantPool[index].value);
-		
+	private static void parseAttributeConstantValue(DataInputStream in)
+			throws IOException {
+		int index = in.readUnsignedShort();
+		System.out.println("\t#" + index + "  //" + constantPool[index].tag
+				+ " " + constantPool[index].value);
+
 	}
 
-	private static void parseAttributeSouceFile(DataInputStream in) throws IOException {
-		int index=in.readUnsignedShort();
-		System.out.println("\t#"+index+"  //"+constantPool[index].value);
+	private static void parseAttributeSouceFile(DataInputStream in)
+			throws IOException {
+		int index = in.readUnsignedShort();
+		System.out.println("\t#" + index + "  //" + constantPool[index].value);
 	}
 
-	//u2:local_variable_table_length,local_variable_info:local_variable_table
-	private static void parseAttributeLocalVariableTable(DataInputStream in) throws IOException {
-		int tableLength=in.readUnsignedShort();
-		for(int i=0;i<tableLength;i++){
-			//局部变量生命周期开始的字节码偏移量和覆盖长度，结合起来表示局部变更的作用域范围
-			int startpc=in.readUnsignedShort();
-			int length=in.readUnsignedShort();
-			//指向常量池CONSTANT_utf8_info型常量的索引，分别代表局部变量的名称和描述符
-			int nameIndex=in.readUnsignedShort();
-			int descriptorIndex=in.readUnsignedShort();
-			//局部变量在栈桢局部变量表中Slot的位置,当时变量数据类型为64位类型(double和long),它占用的Slot为index和index+1两个位置
-			int index=in.readUnsignedShort();
-					
-			System.out.println("\tLV: "+startpc+" -> "+(startpc+length)+",NI:"+constantPool[nameIndex].value+
-					",DI:"+constantPool[descriptorIndex].value+",Slot:"+index);
+	// u2:local_variable_table_length,local_variable_info:local_variable_table
+	private static void parseAttributeLocalVariableTable(DataInputStream in)
+			throws IOException {
+		int tableLength = in.readUnsignedShort();
+		for (int i = 0; i < tableLength; i++) {
+			// 局部变量生命周期开始的字节码偏移量和覆盖长度，结合起来表示局部变更的作用域范围
+			int startpc = in.readUnsignedShort();
+			int length = in.readUnsignedShort();
+			// 指向常量池CONSTANT_utf8_info型常量的索引，分别代表局部变量的名称和描述符
+			int nameIndex = in.readUnsignedShort();
+			int descriptorIndex = in.readUnsignedShort();
+			// 局部变量在栈桢局部变量表中Slot的位置,当时变量数据类型为64位类型(double和long),它占用的Slot为index和index+1两个位置
+			int index = in.readUnsignedShort();
+
+			System.out.println("\tLV: " + startpc + " -> " + (startpc + length)
+					+ ",NI:" + constantPool[nameIndex].value + ",DI:"
+					+ constantPool[descriptorIndex].value + ",Slot:" + index);
 		}
-		
+
 	}
 
-	//u2:number_of_exceptions,u2:exception_index_table
-	private static void parseAttributeException(DataInputStream in) throws IOException {
-		int numOfExcep=in.readUnsignedShort();
-		for(int i=0;i<numOfExcep;i++){
-			int index=in.readUnsignedShort();
+	// u2:number_of_exceptions,u2:exception_index_table
+	private static void parseAttributeException(DataInputStream in)
+			throws IOException {
+		int numOfExcep = in.readUnsignedShort();
+		for (int i = 0; i < numOfExcep; i++) {
+			int index = in.readUnsignedShort();
 			int classIndex = constantPool[index].classIndex;
-			System.out.println("  #"+classIndex+","+constantPool[classIndex].value);
+			System.out.println("  #" + classIndex + ","
+					+ constantPool[classIndex].value);
 		}
-		
+
 	}
 
-	//u2:line_number_table_length,line_number_info(u2:start_pc,u2:line_number):line_number_table
-	private static void parseAttributeLineNumberTable(DataInputStream in) throws IOException {
-		int length=in.readUnsignedShort();
-		for(int i=0;i<length;i++){
-			int startpc=in.readUnsignedShort();//字节码行号
-			int lineNumber=in.readUnsignedShort();//java源代码行号
-			System.out.println("\tline "+lineNumber+": "+startpc);
+	// u2:line_number_table_length,line_number_info(u2:start_pc,u2:line_number):line_number_table
+	private static void parseAttributeLineNumberTable(DataInputStream in)
+			throws IOException {
+		int length = in.readUnsignedShort();
+		for (int i = 0; i < length; i++) {
+			int startpc = in.readUnsignedShort();// 字节码行号
+			int lineNumber = in.readUnsignedShort();// java源代码行号
+			System.out.println("\tline " + lineNumber + ": " + startpc);
 		}
-		
+
 	}
 
 	/**
@@ -503,7 +641,7 @@ public class Dec {
 	 */
 	private static void parseAttributeCode(DataInputStream in)
 			throws IOException {
-		
+
 		int maxStack = in.readUnsignedShort();
 		int maxLocals = in.readUnsignedShort();
 		System.out.println("\tstack=" + maxStack + ",locals=" + maxLocals);
@@ -608,14 +746,14 @@ public class Dec {
 			}
 		}
 
-		System.out.println("\t"+startIndex + " : " + mnemonic);
+		System.out.println("\t" + startIndex + " : " + mnemonic);
 		return skip;
 
 	}
 
 	private static int bytes2int(byte[] bs) {
-		int result = bs[bs.length-1];
-		for (int i = 0; i < bs.length-1; i++) {
+		int result = bs[bs.length - 1];
+		for (int i = 0; i < bs.length - 1; i++) {
 			result = result | (bs[i] << (int) Math.pow(2, bs.length - i - 1));
 		}
 
