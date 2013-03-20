@@ -20,7 +20,7 @@ public class Decompiler {
 	 * @throws IOException
 	 */
 	public static void main(String[] args) throws IOException {
-		String filename = "d:\\work\\jvm\\testfiles\\Helloworld.class";
+		String filename = "..\\testfiles\\Helloworld.class";
 		//String filename = "d:\\work\\jvm\\decompiler\\java\\bin\\org\\bocai\\decompiler\\java\\Dec.class";
 		DataInputStream in = new DataInputStream(new FileInputStream(filename));
 
