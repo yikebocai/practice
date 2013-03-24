@@ -18,6 +18,7 @@ public class GCDemo {
 	/**
 	 * Minor GC Demo
 	 */
+	@SuppressWarnings("unused")
 	private static void testMinorGC() {
 		byte[] alloc1=new byte[2*_1MB];
 		byte[] alloc2=new byte[2*_1MB];
@@ -33,7 +34,7 @@ public class GCDemo {
 		
 		//if MaxTenuringThreshold>2 ,then move alloc5 into old,but whatever alloc5 is moved into old,why? 
 		alloc4=null;
-		byte[] alloc7=new byte[4*_1MB];
+		//byte[] alloc7=new byte[4*_1MB];
 		//System.out.println(alloc5.length);
 	}
 	
@@ -41,6 +42,7 @@ public class GCDemo {
 	/**
 	 * Full GC Demo
 	 */
+	@SuppressWarnings("unused")
 	private static void testFullGC() {
 		byte[] alloc1=new byte[2*_1MB];
 		byte[] alloc2=new byte[2*_1MB];
