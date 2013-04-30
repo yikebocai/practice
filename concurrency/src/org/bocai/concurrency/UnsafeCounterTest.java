@@ -20,7 +20,7 @@ public class UnsafeCounterTest {
 			e.printStackTrace();
 		}
 		
-		System.out.println("The final counter is " + counter.get());
+		System.out.println("The final counter  is " + counter.get());
 	}
 }
 

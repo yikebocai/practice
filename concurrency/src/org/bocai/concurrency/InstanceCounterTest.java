@@ -30,7 +30,7 @@ public class InstanceCounterTest {
 		}
 
 		for (int i = 0; i < 10; i++)
-			System.out.println("counter  " + i + " : " + map.get("thread-"+i).get());
+			System.out.println("counter " + i + " : " + map.get("thread-"+i).get());
 	}
 }
 

@@ -20,7 +20,7 @@ public class SafeCounterTest {
 			e.printStackTrace();
 		}
 
-		System.out.println("The final counter is " + counter.get());
+		System.out.println("The final  counter is " + counter.get());
 	}
 }
 
